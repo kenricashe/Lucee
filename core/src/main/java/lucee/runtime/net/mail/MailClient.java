@@ -112,13 +112,14 @@ public abstract class MailClient implements PoolItem {
 	private static final Collection.Key HTML_BODY = KeyImpl.getInstance("HTMLBody");
 	private static final Collection.Key ATTACHMENTS = KeyImpl.getInstance("attachments");
 	private static final Collection.Key ATTACHMENT_FILES = KeyImpl.getInstance("attachmentfiles");
+	private static final Collection.Key DELIVERY_STATUS = KeyImpl.getInstance("deliverystatus");
 
 	public static final int TYPE_POP3 = 0;
 	public static final int TYPE_IMAP = 1;
 
 	private String _flddo[] = { "date", "from", "messagenumber", "messageid", "replyto", "subject", "cc", "to", "size", "header", "uid" };
 	private String _fldnew[] = { "date", "from", "messagenumber", "messageid", "replyto", "subject", "cc", "to", "size", "header", "uid", "body", "textBody", "HTMLBody",
-			"attachments", "attachmentfiles", "cids" };
+			"attachments", "attachmentfiles", "cids", "deliverystatus" };
 	private String server = null;
 	private String username = null;
 	private String password = null;
@@ -449,6 +450,11 @@ public abstract class MailClient implements PoolItem {
 			query.setAtEL(HTML_BODY, row, content);
 			body.append(content);
 		}
+		else if (message.isMimeType("message/delivery-status")) {
+			String content = getConent(message);
+			query.setAtEL(DELIVERY_STATUS, row, content);
+			body.append(content);
+		}
 		else {
 			Object content = message.getContent();
 			if (content instanceof MimeMultipart) {
@@ -524,6 +530,11 @@ public abstract class MailClient implements PoolItem {
 			else if (bodypart.isMimeType("text/html")) {
 				content = getConent(bodypart);
 				query.setAtEL(HTML_BODY, row, content);
+				if (body.length() == 0) body.append(content);
+			}
+			else if (bodypart.isMimeType("message/delivery-status")) {
+				content = getConent(bodypart);
+				query.setAtEL(DELIVERY_STATUS, row, content);
 				if (body.length() == 0) body.append(content);
 			}
 			else if ((content = bodypart.getContent()) instanceof Multipart) {
